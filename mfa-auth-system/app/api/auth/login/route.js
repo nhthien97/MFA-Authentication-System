@@ -4,15 +4,17 @@ import jwt from "jsonwebtoken";
 
 export async function POST(req) {
   try {
-    const body = await req.json();
+    const { email, password } = await req.json();
 
-    const { email, password } = body;
+    if (!email || !password) {
+      return Response.json(
+        { message: "Missing email or password" },
+        { status: 400 }
+      );
+    }
 
-    // kiểm tra user
     const user = await prisma.user.findUnique({
-      where: {
-        email,
-      },
+      where: { email },
     });
 
     if (!user) {
@@ -22,7 +24,6 @@ export async function POST(req) {
       );
     }
 
-    // kiểm tra password
     const isPasswordValid = await bcrypt.compare(
       password,
       user.password_hash
@@ -35,7 +36,14 @@ export async function POST(req) {
       );
     }
 
-    // tạo JWT token
+    if (user.mfa_enabled) {
+      return Response.json({
+        message: "MFA required",
+        requireOTP: true,
+        email: user.email,
+      });
+    }
+
     const token = jwt.sign(
       {
         userId: user.id,
@@ -50,9 +58,12 @@ export async function POST(req) {
     return Response.json({
       message: "Login success",
       token,
-      user,
+      user: {
+        id: user.id,
+        email: user.email,
+        mfa_enabled: user.mfa_enabled,
+      },
     });
-
   } catch (error) {
     console.log(error);
 

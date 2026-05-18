@@ -1,63 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function LoginPage() {
+export default function VerifyOTPPage() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [token, setToken] = useState("");
   const [message, setMessage] = useState("");
 
-  async function handleLogin(e) {
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("mfa_email");
+
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+  }, []);
+
+  async function handleVerify(e) {
     e.preventDefault();
 
-    const res = await fetch("/api/auth/login", {
+    setMessage("");
+
+    const res = await fetch("/api/auth/verify-otp", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         email,
-        password,
+        token,
       }),
     });
 
     const data = await res.json();
 
-    if (data.token) {
-      localStorage.setItem("token", data.token);
-    }
-
     setMessage(data.message);
+
+    // Nếu verify thành công
+    if (res.ok) {
+      window.location.href = "/dashboard";
+    }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <form
-        onSubmit={handleLogin}
+        onSubmit={handleVerify}
         className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm"
       >
         <h1 className="text-2xl font-bold mb-6 text-center">
-          Login
+          Verify OTP
         </h1>
 
         <input
-          className="w-full border p-3 rounded mb-4"
+          className="w-full border p-3 rounded mb-4 bg-gray-100"
           type="email"
-          placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          readOnly
         />
 
         <input
           className="w-full border p-3 rounded mb-4"
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          type="text"
+          placeholder="Enter OTP"
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
         />
 
-        <button className="w-full bg-blue-600 text-white p-3 rounded">
-          Login
+        <button className="w-full bg-green-600 text-white p-3 rounded">
+          Verify OTP
         </button>
 
         {message && (

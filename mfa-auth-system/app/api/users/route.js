@@ -1,7 +1,37 @@
 import { prisma } from "@/lib/db";
+import jwt from "jsonwebtoken";
 
-export async function GET() {
+export async function GET(req) {
   try {
+    const auth = req.headers.get("authorization");
+
+    if (!auth) {
+      return Response.json(
+        { message: "No token" },
+        { status: 401 }
+      );
+    }
+
+    const token = auth.replace("Bearer ", "");
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
+
+    const currentUser = await prisma.user.findUnique({
+      where: {
+        id: decoded.userId,
+      },
+    });
+
+    if (!currentUser || currentUser.role !== "ADMIN") {
+      return Response.json(
+        { message: "Access denied" },
+        { status: 403 }
+      );
+    }
+
     const users = await prisma.user.findMany({
       orderBy: {
         created_at: "desc",
@@ -25,8 +55,8 @@ export async function GET() {
     console.log(error);
 
     return Response.json(
-      { message: "Server error" },
-      { status: 500 }
+      { message: "Unauthorized" },
+      { status: 401 }
     );
   }
 }

@@ -9,10 +9,23 @@ const [users,setUsers]=useState([]);
 
 useEffect(()=>{
 
-fetch("/api/users")
+const token = localStorage.getItem("token");
+
+fetch("/api/users", {
+headers:{
+Authorization:`Bearer ${token}`
+}
+})
 .then(res=>res.json())
 .then(data=>{
+
+if(data.message === "Access denied"){
+ window.location.href="/dashboard";
+ return;
+}
+
 setUsers(data.users || []);
+
 });
 
 },[]);

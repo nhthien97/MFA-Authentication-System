@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+cd mfa-auth-system
 
-## Getting Started
-
-First, run the development server:
-
-```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+npx prisma studio
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+/register
+→ tạo tài khoản mới
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+/login
+→ đăng nhập lần đầu
 
-## Learn More
+/dashboard
+→ vào dashboard bảo mật
 
-To learn more about Next.js, take a look at the following resources:
+/setup-mfa
+→ tạo QR Code
+→ quét bằng Google Authenticator
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+/verify-otp
+→ nhập mã OTP 6 
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+/logout hoặc bấm Logout
+→ đăng nhập lại
+→ hệ thống bắt nhập OTP
 
-## Deploy on Vercel
+/login
+→ nhập sai mật khẩu 5 lần
+→ tài khoản bị khóa
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+/login-logs
+→ xem lịch sử đăng nhập
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+/security
+→ xem trạng thái bảo mật
+
+/admin/users
+→ admin xem danh sách user
+
+/settings
+→ đổi mật khẩu
+→ reset MFA
+
+npx prisma studio

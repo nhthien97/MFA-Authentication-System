@@ -9,51 +9,72 @@ export default function RegisterPage() {
 
   async function handleRegister(e) {
     e.preventDefault();
+    setMessage("");
 
     const res = await fetch("/api/auth/register", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
     const data = await res.json();
     setMessage(data.message);
+
+    if (res.ok) {
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1000);
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form
-        onSubmit={handleRegister}
-        className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm"
-      >
-        <h1 className="text-2xl font-bold mb-6 text-center">Register</h1>
-
-        <input
-          className="w-full border p-3 rounded mb-4"
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          className="w-full border p-3 rounded mb-4"
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button className="w-full bg-blue-600 text-white p-3 rounded">
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
+      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl">
+        <h1 className="text-center text-3xl font-bold text-slate-900">
           Register
-        </button>
+        </h1>
+
+        <p className="mt-2 text-center text-slate-600">
+          Create your secure account
+        </p>
+
+        <form onSubmit={handleRegister} className="mt-8 space-y-5">
+          <input
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-500 outline-none focus:border-blue-600"
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <input
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-500 outline-none focus:border-blue-600"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          <button className="w-full rounded-xl bg-green-600 py-3 font-bold text-white hover:bg-green-700">
+            Register
+          </button>
+        </form>
 
         {message && (
-          <p className="mt-4 text-center text-sm text-gray-700">{message}</p>
+          <p className="mt-5 text-center font-semibold text-blue-600">
+            {message}
+          </p>
         )}
-      </form>
+
+        <p className="mt-6 text-center text-slate-600">
+          Already have an account?{" "}
+          <a href="/login" className="font-bold text-blue-600">
+            Login
+          </a>
+        </p>
+      </div>
     </div>
   );
 }

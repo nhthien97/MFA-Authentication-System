@@ -4,15 +4,17 @@ import QRCode from "qrcode";
 
 export async function POST(req) {
   try {
-    const body = await req.json();
+    const { email } = await req.json();
 
-    const { email } = body;
+    if (!email) {
+      return Response.json(
+        { message: "Missing email" },
+        { status: 400 }
+      );
+    }
 
-    // tìm user
     const user = await prisma.user.findUnique({
-      where: {
-        email,
-      },
+      where: { email },
     });
 
     if (!user) {
@@ -22,32 +24,34 @@ export async function POST(req) {
       );
     }
 
-    // tạo secret
+    if (user.mfa_enabled && user.mfa_secret) {
+      return Response.json(
+        {
+          message: "MFA is already enabled for this account. Please use Verify OTP.",
+        },
+        { status: 400 }
+      );
+    }
+
     const secret = speakeasy.generateSecret({
       name: `MFA-System (${email})`,
     });
 
-    // lưu secret vào database
     await prisma.user.update({
-      where: {
-        email,
-      },
+      where: { email },
       data: {
         mfa_secret: secret.base32,
+        mfa_enabled: false,
       },
     });
 
-    // tạo QR code
-    const qrCode = await QRCode.toDataURL(
-      secret.otpauth_url
-    );
+    const qrCode = await QRCode.toDataURL(secret.otpauth_url);
 
     return Response.json({
-      message: "MFA setup success",
+      message: "QR Code generated successfully",
       qrCode,
       secret: secret.base32,
     });
-
   } catch (error) {
     console.log(error);
 

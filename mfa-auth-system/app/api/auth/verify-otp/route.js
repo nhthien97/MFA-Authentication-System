@@ -1,60 +1,254 @@
 import { prisma } from "@/lib/db";
 import speakeasy from "speakeasy";
+import jwt from "jsonwebtoken";
+
 
 export async function POST(req) {
+
   try {
-    const body = await req.json();
 
-    const { email, token } = body;
+    const { email, token } =
+      await req.json();
 
-    // tìm user
-    const user = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
 
-    if (!user || !user.mfa_secret) {
+    const ip =
+      req.headers.get("x-forwarded-for")
+      ||
+      "unknown";
+
+
+    const userAgent =
+      req.headers.get("user-agent")
+      ||
+      "unknown";
+
+
+
+    if (!email || !token) {
+
       return Response.json(
-        { message: "MFA not setup" },
-        { status: 400 }
+        {
+          message:
+          "Missing email or OTP"
+        },
+        {
+          status:400
+        }
       );
+
     }
 
-    // verify OTP
-    const verified = speakeasy.totp.verify({
-      secret: user.mfa_secret,
-      encoding: "base32",
-      token,
+
+
+    const user =
+      await prisma.user.findUnique({
+        where:{
+          email
+        }
+      });
+
+
+
+    if (
+      !user ||
+      !user.mfa_secret
+    ) {
+
+      return Response.json(
+        {
+          message:
+          "MFA not setup"
+        },
+        {
+          status:400
+        }
+      );
+
+    }
+
+
+
+
+    const verified =
+    speakeasy.totp.verify({
+
+      secret:
+      user.mfa_secret,
+
+      encoding:
+      "base32",
+
+      token:
+      token.trim(),
+
+      window:2
+
     });
+
+
+
+
+    // OTP sai
 
     if (!verified) {
+
+
+      await prisma.loginLog.create({
+
+        data:{
+
+          user_id:
+          user.id,
+
+          ip_address:
+          ip,
+
+          user_agent:
+          userAgent,
+
+          status:
+          "FAILED_OTP"
+
+        }
+
+      });
+
+
+
       return Response.json(
-        { message: "Invalid OTP" },
-        { status: 401 }
+        {
+          message:
+          "Invalid OTP"
+        },
+        {
+          status:401
+        }
       );
+
+
     }
 
-    // bật MFA
+
+
+
+    // OTP đúng
+
+
     await prisma.user.update({
-      where: {
-        email,
+
+      where:{
+        email
       },
-      data: {
-        mfa_enabled: true,
-      },
+
+
+      data:{
+
+        mfa_enabled:true,
+
+        failed_attempts:0,
+
+        locked_until:null
+
+      }
+
     });
+
+
+
+
+    await prisma.loginLog.create({
+
+      data:{
+
+        user_id:
+        user.id,
+
+        ip_address:
+        ip,
+
+        user_agent:
+        userAgent,
+
+        status:
+        "OTP_SUCCESS"
+
+      }
+
+    });
+
+
+
+
+
+    const jwtToken =
+    jwt.sign(
+
+      {
+
+        userId:user.id,
+
+        email:user.email
+
+      },
+
+
+      process.env.JWT_SECRET,
+
+
+      {
+
+        expiresIn:"1d"
+
+      }
+
+    );
+
+
+
+
 
     return Response.json({
-      message: "OTP verified successfully",
+
+      message:
+      "OTP verified successfully",
+
+      token:
+      jwtToken,
+
+
+      user:{
+
+        id:user.id,
+
+        email:user.email,
+
+        mfa_enabled:true
+
+      }
+
+
     });
 
-  } catch (error) {
+
+
+
+  } catch(error){
+
+
     console.log(error);
 
+
     return Response.json(
-      { message: "Server error" },
-      { status: 500 }
+      {
+        message:
+        "Server error"
+      },
+      {
+        status:500
+      }
     );
+
   }
+
+
 }

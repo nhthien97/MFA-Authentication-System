@@ -15,6 +15,7 @@ model User {
   mfa_enabled     Boolean   @default(false)
   failed_attempts Int       @default(0)
   locked_until    DateTime?
+  role            String    @default("USER")
   created_at      DateTime  @default(now())
 
   login_logs LoginLog[]
